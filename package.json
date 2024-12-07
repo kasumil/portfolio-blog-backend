@@ -2,6 +2,12 @@
   "name": "blog-backend",
   "packageManager": "yarn@3.6.4",
   "dependencies": {
+    "eslint-config-prettier": "^9.1.0",
     "koa": "^2.15.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "eslint": "^9.16.0",
+    "globals": "^15.13.0"
   }
 }
