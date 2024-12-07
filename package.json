@@ -1,0 +1,7 @@
+{
+  "name": "blog-backend",
+  "packageManager": "yarn@3.6.4",
+  "dependencies": {
+    "koa": "^2.15.3"
+  }
+}
