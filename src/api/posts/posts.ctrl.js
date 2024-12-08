@@ -1,4 +1,18 @@
 import Post from '../../models/posts.js';
+import mongoose from 'mongoose';
+
+const { ObjectId } = mongoose.Types;
+
+// 미들웨어
+export const checkObjectId = (ctx, next) => {
+  const { id } = ctx.params;
+  console.log('id: ', id);
+  if (!ObjectId.isValid(id)) {
+    ctx.status = 400;
+    return;
+  }
+  return next();
+};
 
 /*
   POST /api/posts
