@@ -2,12 +2,22 @@
   "name": "blog-backend",
   "packageManager": "yarn@3.6.4",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "eslint-config-prettier": "^9.1.0",
-    "koa": "^2.15.3"
+    "koa": "^2.15.3",
+    "koa-bodyparser": "^4.4.1",
+    "koa-router": "^13.0.1",
+    "mongoose": "^8.8.4"
+  },
+  "scripts": {
+    "start": "node src",
+    "start:dev": "nodemon --watch src/ src/index.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.16.0",
     "eslint": "^9.16.0",
-    "globals": "^15.13.0"
-  }
+    "globals": "^15.13.0",
+    "nodemon": "^3.1.7"
+  },
+  "type": "module"
 }
