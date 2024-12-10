@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
+// 스키마 정의
 const PostSchema = new Schema({
   title: String,
   body: String,
@@ -12,5 +13,6 @@ const PostSchema = new Schema({
   },
 });
 
+// 모델 생성
 const Post = mongoose.model('Post', PostSchema);
 export default Post;

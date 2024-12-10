@@ -1,5 +1,6 @@
 import Post from '../../models/posts.js';
 import mongoose from 'mongoose';
+import Joi from 'joi';
 
 const { ObjectId } = mongoose.Types;
 
@@ -23,6 +24,21 @@ export const checkObjectId = (ctx, next) => {
   }
 */
 export const write = async (ctx) => {
+  // 갳게가 다음 필드 있는지 여부 검증
+  const schema = Joi.object().keys({
+    title: Joi.string().required(),
+    body: Joi.string().required(),
+    tags: Joi.array().items(Joi.string()).required(),
+  });
+
+  // 검증하고 나서 검증 실패인 경우 에러
+  const result = schema.validate(ctx.request.body);
+  if (result.error) {
+    ctx.status = 400; // Bad Request
+    ctx.body = result.error;
+    return;
+  }
+
   const { title, body, tags } = ctx.request.body;
   const post = new Post({
     title,
@@ -41,9 +57,26 @@ export const write = async (ctx) => {
   GET /api/posts
 */
 export const list = async (ctx) => {
+  const page = parseInt(ctx.query.page || '1', 10);
+
+  if (page < 1) {
+    ctx.status = 400;
+    return;
+  }
+
   try {
-    const posts = await Post.find().exec();
-    ctx.body = posts;
+    const posts = await Post.find()
+      .sort({ _id: -1 })
+      .limit(10)
+      .skip((page - 1) * 10)
+      .lean() // lean을 사용하면 몽고디비 조회당시 json으로 값이 반환 됨
+      .exec();
+    const pageCount = await Post.countDocuments().exec(); // 페이지 마지막 값 조회.
+    ctx.set('Last-Page', Math.ceil(pageCount / 10));
+    ctx.body = posts.map((post) => ({
+      ...post,
+      body: post.body.length < 200 ? post.body : `${post.body.slice(0, 200)}...`,
+    }));
   } catch (e) {
     ctx.throw(500, e);
   }
@@ -85,9 +118,25 @@ export const remove = async (ctx) => {
 */
 export const update = async (ctx) => {
   const { id } = ctx.params;
+
+  // 갳게가 다음 필드 있는지 여부 검증
+  const schema = Joi.object().keys({
+    title: Joi.string(),
+    body: Joi.string(),
+    tags: Joi.array().items(Joi.string()),
+  });
+
+  // 검증하고 나서 검증 실패인 경우 에러
+  const result = schema.validate(ctx.request.body);
+  if (result.error) {
+    ctx.status = 400; // Bad Request
+    ctx.body = result.error;
+    return;
+  }
+
   try {
     const post = await Post.findByIdAndUpdate(id, ctx.request.body, {
-      new: true,
+      new: true, // new의 경우 업데이트 된 내용 반환, false의 경우 업데이트 되기전의 데이터 반환
     }).exec();
     if (!post) {
       ctx.status = 404;
