@@ -4,6 +4,7 @@ import Router from 'koa-router';
 import bodyParser from 'koa-bodyParser';
 import mongoose from 'mongoose';
 import api from './api/index.js';
+import jwtMiddleware from './lib/middleware.js';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ router.use('/api', api.routes());
 
 // 라우터 적용전에 적용
 app.use(bodyParser());
+app.use(jwtMiddleware);
 
 // app 인스턴스에 라우터 적용
 app.use(router.routes()).use(router.allowedMethods());

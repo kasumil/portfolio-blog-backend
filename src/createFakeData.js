@@ -3,7 +3,7 @@ import Post from './models/posts.js';
 export default async function createFakeData() {
   const posts = [...Array(40).keys()].map((i) => ({
     title: `포스트 ${i}`,
-    body: `Irure fugiat duis ex non magna id minim qui labore ullamco aliqua anim nulla consequat. Aute consequat nisi velit dolor laborum officia velit sint proident deserunt duis excepteur. ...`, // 중략 가능
+    body: `Irure fugiat duis ex non magna id minim qui labore ullamco aliqua anim nulla consequat. Aute consequat nisi velit dolor laborum officia velit sint proident deserunt duis excepteur.Laboris ipsum labore dolore qui.Aliqua aute incididunt labore adipisicing laborum qui ullamco quis veniam duis proident quis.`, // 중략 가능
     tags: ['가짜', '데이터'],
   }));
 
