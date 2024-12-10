@@ -6,7 +6,7 @@
     "baseUrl": "./src",
     "paths": {
       "@api/*": ["api/*"],
-      "@components/*": ["components/*"]
+      "@model/*": ["model/*"]
     },
     "allowJs": true,
     "checkJs": false,
