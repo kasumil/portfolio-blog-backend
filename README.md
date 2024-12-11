@@ -6,3 +6,4 @@
     Node.js
     Koa 프레임워크
     Mongodb
+    JWT

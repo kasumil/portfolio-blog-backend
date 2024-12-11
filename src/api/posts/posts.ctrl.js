@@ -5,14 +5,24 @@ import Joi from 'joi';
 const { ObjectId } = mongoose.Types;
 
 // 미들웨어
-export const checkObjectId = (ctx, next) => {
+export const getPostById = async (ctx, next) => {
   const { id } = ctx.params;
-  console.log('id: ', id);
   if (!ObjectId.isValid(id)) {
     ctx.status = 400;
     return;
   }
-  return next();
+  try {
+    const post = await Post.findById(id);
+    // post가 존재하지 않을때
+    if (!post) {
+      ctx.status = 404;
+      return;
+    }
+    ctx.state.post = post;
+    return next();
+  } catch (e) {
+    ctx.throw(500, e);
+  }
 };
 
 /*
@@ -44,6 +54,7 @@ export const write = async (ctx) => {
     title,
     body,
     tags,
+    user: ctx.state.user,
   });
   try {
     await post.save();
@@ -54,9 +65,11 @@ export const write = async (ctx) => {
 };
 
 /*
-  GET /api/posts
+  GET /api/posts?username=&tag=&page=
 */
 export const list = async (ctx) => {
+  // query는 문자열이므로 숫자로 변환해줘야함.
+  // 값이 주어지지 않았으면 1을 기본 사용
   const page = parseInt(ctx.query.page || '1', 10);
 
   if (page < 1) {
@@ -64,14 +77,21 @@ export const list = async (ctx) => {
     return;
   }
 
+  const { tag, username } = ctx.query;
+  // tag, username 값이 유효하면 객체 안에 넣고, 그렇지 않으면 넣지 않음.
+  const query = {
+    ...(username ? { 'user.username': username } : {}),
+    ...(tag ? { tags: tag } : {}),
+  };
+
   try {
-    const posts = await Post.find()
+    const posts = await Post.find(query)
       .sort({ _id: -1 })
       .limit(10)
       .skip((page - 1) * 10)
       .lean() // lean을 사용하면 몽고디비 조회당시 json으로 값이 반환 됨
       .exec();
-    const pageCount = await Post.countDocuments().exec(); // 페이지 마지막 값 조회.
+    const pageCount = await Post.countDocuments(query).exec(); // 페이지 마지막 값 조회.
     ctx.set('Last-Page', Math.ceil(pageCount / 10));
     ctx.body = posts.map((post) => ({
       ...post,
@@ -86,18 +106,7 @@ export const list = async (ctx) => {
   GET /api/posts/:id
 */
 export const read = async (ctx) => {
-  const { id } = ctx.params;
-
-  try {
-    const post = await Post.findById(id).exec();
-    if (!post) {
-      ctx.status = 404;
-      return;
-    }
-    ctx.body = post;
-  } catch (e) {
-    ctx.throw(500, e);
-  }
+  ctx.body = ctx.state.post;
 };
 
 /*
@@ -145,4 +154,14 @@ export const update = async (ctx) => {
   } catch (e) {
     ctx.throw(500, e);
   }
+};
+
+// 해당 작성자가 맞는지 체크하는 기능
+export const checkOwnPost = (ctx, next) => {
+  const { user, post } = ctx.state;
+  if (post?.user?._id.toString() !== user._id) {
+    ctx.status = 403; // forbidden
+    return;
+  }
+  return next();
 };
