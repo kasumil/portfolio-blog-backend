@@ -62,7 +62,6 @@ export const login = async (ctx) => {
   // username, password 없으면 에러처리
   if (!username || !password) {
     ctx.status = 401;
-    return;
   }
 
   try {
@@ -80,12 +79,15 @@ export const login = async (ctx) => {
       return;
     }
 
-    ctx.body = user.serialize();
     const token = user.generateToken();
     ctx.cookies.set('access_token', token, {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
       httpOnly: true,
     });
+    ctx.body = {
+      user: user.serialize(),
+      token,
+    };
   } catch (e) {
     ctx.throw(500, e);
   }
@@ -96,12 +98,15 @@ export const login = async (ctx) => {
 */
 export const check = async (ctx) => {
   // 로그인상태 확인
-  const { user } = ctx.state;
-  if (!user) {
+  const token = ctx.header?.authorization.split('Bearer ')[1];
+  if (!token) {
     ctx.status = 401;
     return;
   }
-  ctx.body = user;
+  ctx.body = {
+    status: 200,
+    message: 'Y',
+  };
 };
 
 /*
