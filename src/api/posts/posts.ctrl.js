@@ -1,8 +1,19 @@
 import Post from '../../models/posts.js';
 import mongoose from 'mongoose';
 import Joi from 'joi';
+import sanitizeHtml from 'sanitize-html';
 
 const { ObjectId } = mongoose.Types;
+
+const sanitizeOption = {
+  allowedTags: ['h1', 'h2', 'b', 'i', 'u', 's', 'p', 'ul', 'ol', 'li', 'blockquote', 'a', 'img'],
+  allowedAttributes: {
+    a: ['href', 'name', 'target'],
+    img: ['src'],
+    li: ['class'],
+  },
+  allowedSchemes: ['data', 'http'],
+};
 
 // 미들웨어
 export const getPostById = async (ctx, next) => {
@@ -52,7 +63,7 @@ export const write = async (ctx) => {
   const { title, body, tags } = ctx.request.body;
   const post = new Post({
     title,
-    body,
+    body: sanitizeHtml(body, sanitizeOption),
     tags,
     user: ctx.state.user,
   });
@@ -62,6 +73,13 @@ export const write = async (ctx) => {
   } catch (e) {
     ctx.throw(500, e);
   }
+};
+
+const removeHtmlAndShorten = (body) => {
+  const filtered = sanitizeHtml(body, {
+    allowedTags: [],
+  });
+  return filtered.length < 200 ? filtered : `${filtered.slice(0, 200)}...`;
 };
 
 /*
@@ -92,11 +110,13 @@ export const list = async (ctx) => {
       .lean() // lean을 사용하면 몽고디비 조회당시 json으로 값이 반환 됨
       .exec();
     const pageCount = await Post.countDocuments(query).exec(); // 페이지 마지막 값 조회.
-    ctx.set('Last-Page', Math.ceil(pageCount / 10));
-    ctx.body = posts.map((post) => ({
-      ...post,
-      body: post.body.length < 200 ? post.body : `${post.body.slice(0, 200)}...`,
-    }));
+    ctx.body = {
+      data: posts.map((post) => ({
+        ...post,
+        body: removeHtmlAndShorten(post.body),
+      })),
+      lastPage: Math.ceil(pageCount / 10),
+    };
   } catch (e) {
     ctx.throw(500, e);
   }
@@ -106,7 +126,17 @@ export const list = async (ctx) => {
   GET /api/posts/:id
 */
 export const read = async (ctx) => {
-  ctx.body = ctx.state.post;
+  const { id } = ctx.params;
+  try {
+    const data = await Post.findById(id).exec();
+    if (!data) {
+      ctx.status = 204;
+      return;
+    }
+    ctx.body = data;
+  } catch (e) {
+    ctx.throw(500, e);
+  }
 };
 
 /*
@@ -143,8 +173,14 @@ export const update = async (ctx) => {
     return;
   }
 
+  const nextData = { ...ctx.request.body }; // 객체를 복사하고
+  // body 값이 주어졌으면 HTML 필터링
+  if (nextData.body) {
+    nextData.body = sanitizeHtml(nextData.body, sanitizeOption);
+  }
+
   try {
-    const post = await Post.findByIdAndUpdate(id, ctx.request.body, {
+    const post = await Post.findByIdAndUpdate(id, nextData, {
       new: true, // new의 경우 업데이트 된 내용 반환, false의 경우 업데이트 되기전의 데이터 반환
     }).exec();
     if (!post) {

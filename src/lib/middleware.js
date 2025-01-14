@@ -3,13 +3,17 @@ import User from '../models/user.js';
 
 const jwtMiddleware = async (ctx, next) => {
   const token = ctx.cookies.get('access_token');
-  if (!token) return next(); // 토큰이 없음
+  if (!token) {
+    console.log('No token found');
+    return next(); // 토큰이 없음
+  }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     ctx.state.user = {
       _id: decoded._id,
       username: decoded.username,
     };
+    console.log('Token decoded:', ctx.state.user);
 
     // 토큰의 유효기간이 3.5일 미만이면 재발급
     const now = Math.floor(Date.now() / 1000);
@@ -19,10 +23,13 @@ const jwtMiddleware = async (ctx, next) => {
       ctx.cookies.set('access_token', token, {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // 프로덕션 환경에서만 secure 설정
       });
+      console.log('Token reissued');
     }
     return next();
   } catch (e) {
+    console.error('Token verification failed:', e);
     return next();
   }
 };

@@ -42,6 +42,7 @@ export const register = async (ctx) => {
     ctx.cookies.set('access_token', token, {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // 프로덕션 환경에서만 secure 설정
     });
   } catch (e) {
     ctx.throw(500, e);
@@ -83,6 +84,7 @@ export const login = async (ctx) => {
     ctx.cookies.set('access_token', token, {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // 프로덕션 환경에서만 secure 설정
     });
     ctx.body = {
       user: user.serialize(),
