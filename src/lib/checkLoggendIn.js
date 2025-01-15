@@ -1,5 +1,5 @@
 const checkLoggedIn = (ctx, next) => {
-  if (!JSON.parse(ctx?.header.state).user) {
+  if (!ctx?.state.user) {
     ctx.status = 401;
     return;
   }

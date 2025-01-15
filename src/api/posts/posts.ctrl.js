@@ -23,7 +23,8 @@ export const getPostById = async (ctx, next) => {
     return;
   }
   try {
-    const post = await Post.findById(id);
+    const post = await Post.findById(id).exec();
+    console.log(post);
     // post가 존재하지 않을때
     if (!post) {
       ctx.status = 404;
@@ -109,7 +110,8 @@ export const list = async (ctx) => {
       .skip((page - 1) * 10)
       .lean() // lean을 사용하면 몽고디비 조회당시 json으로 값이 반환 됨
       .exec();
-    const pageCount = await Post.countDocuments(query).exec(); // 페이지 마지막 값 조회.
+    const pageCount = await Post.countDocuments(query).exec(); //
+    // 페이지 마지막 값 조회.
     ctx.body = {
       data: posts.map((post) => ({
         ...post,
@@ -194,7 +196,8 @@ export const update = async (ctx) => {
 
 // 해당 작성자가 맞는지 체크하는 기능
 export const checkOwnPost = (ctx, next) => {
-  const { user, post } = ctx.state;
+  const post = JSON.parse(ctx.cookies.get('post'));
+  const { user } = ctx.state;
   if (post?.user?._id.toString() !== user._id) {
     ctx.status = 403; // forbidden
     return;

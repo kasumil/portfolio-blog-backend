@@ -23,7 +23,12 @@ mongoose
 const app = new Koa();
 const router = new Router();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+  })
+);
 
 router.use('/api', api.routes());
 

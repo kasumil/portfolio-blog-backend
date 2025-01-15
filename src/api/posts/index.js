@@ -12,5 +12,4 @@ post.delete('/', checkLoggedIn, postCtrl.checkOwnPost, postCtrl.remove);
 post.patch('/', checkLoggedIn, postCtrl.checkOwnPost, postCtrl.update);
 
 posts.use('/:id', postCtrl.getPostById, post.routes());
-
 export default posts;
